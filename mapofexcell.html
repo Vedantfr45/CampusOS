@@ -1,0 +1,1403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CampusOS — Map from your timetable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Reset and core design variables */
+:root {
+  --bg-main: #06090c;
+  --bg-card: #0b1115;
+  --bg-elevated: #111a20;
+  --border: #202d34;
+  --border-focus: #374b54;
+  --text-main: #eff5f5;
+  --text-muted: #8ba0a3;
+  --text-dim: #5c7074;
+  --accent: #4ecdc4;
+  --accent-glow: rgba(78, 205, 196, 0.45);
+  --accent-soft: rgba(78, 205, 196, 0.12);
+  --success: #38ef7d;
+  --amber: #f59e0b;
+  
+  /* Architectural Palette */
+  --c-lab: #cfe7fc;
+  --c-lab-chem: #bfe1fc;
+  --c-office: #fce7cf;
+  --c-office-principal: #fedbb4;
+  --c-auditorium: #fae4ce;
+  --c-stairs: #e3eaee;
+  --c-lift: #ccd7de;
+  --c-restroom: #d4ebd7;
+  --c-washroom: #d4ebd7;
+  --c-utility: #d4ebd7;
+  --c-corridor: #eeddbb; /* Warm architectural floor tone */
+  --c-walls: #131c21;
+  
+  --radius-lg: 16px;
+  --radius-md: 10px;
+  --radius-sm: 6px;
+  --font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 1420px;
+  margin: auto;
+  padding: 24px 24px 60px;
+}
+
+/* Top Navigation Bar */
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.brand-link {
+  color: var(--text-main);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.02em;
+}
+.brand-badge {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-weight: 700;
+  border: 1px solid rgba(78, 205, 196, 0.28);
+}
+.top-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* 4-Floor Switcher Pills */
+.floor-switcher {
+  display: flex;
+  background: var(--bg-card);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  gap: 2px;
+}
+.floor-tab-btn {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.floor-tab-btn:hover {
+  color: var(--text-main);
+  background: rgba(255,255,255,0.03);
+}
+.floor-tab-btn.active {
+  background: var(--bg-elevated);
+  color: var(--accent);
+  font-weight: 700;
+  border: 1px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(78,205,196,0.2);
+}
+.floor-select-dropdown {
+  display: none;
+  background: var(--bg-elevated);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Hero / Header Bar */
+.hero-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.hero-title h1 {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.floor-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: #19262d;
+  color: var(--accent);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(78,205,196,0.3);
+}
+.hero-title p {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+.quick-search {
+  position: relative;
+  width: 320px;
+}
+.quick-search input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  border-radius: var(--radius-md);
+  padding: 10px 16px 10px 38px;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.quick-search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(78, 205, 196, 0.25);
+}
+.quick-search svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  stroke: var(--text-dim);
+  pointer-events: none;
+}
+
+/* Category Filter Bar */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 18px;
+  padding-bottom: 4px;
+}
+.filter-chip {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 99px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.filter-chip span.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.filter-chip:hover { color: var(--text-main); border-color: var(--border-focus); }
+.filter-chip.active {
+  background: var(--bg-elevated);
+  color: var(--text-main);
+  border-color: var(--accent);
+}
+
+/* Layout Grid: Map and Right Sidebar */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 20px;
+  align-items: start;
+}
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+/* Map Header & Toolbar */
+.map-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.map-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.interactive-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 3px 8px;
+  border-radius: 99px;
+  border: 1px solid rgba(78,205,196,0.3);
+}
+
+.map-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tool-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.15s;
+}
+.tool-btn:hover { color: var(--text-main); border-color: var(--accent); }
+
+/* SVG Map Viewport */
+.map-viewport {
+  position: relative;
+  padding: 16px;
+  background: #090e12;
+  overflow: hidden;
+  min-height: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#campusSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 6px 28px rgba(0,0,0,0.45);
+  transition: transform 0.25s ease-out;
+  transform-origin: center center;
+}
+
+/* Floor Placeholder Canvas */
+.floor-placeholder {
+  display: none;
+  width: 100%;
+  min-height: 440px;
+  background: radial-gradient(circle at 50% 50%, #111e26 0%, #080e12 100%);
+  border: 2px dashed #203540;
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.placeholder-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(78,205,196,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.floor-placeholder h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.floor-placeholder p {
+  margin: 0 0 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+  max-width: 480px;
+  line-height: 1.6;
+}
+.btn-return-ground {
+  background: var(--accent);
+  color: #06090c;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 10px 18px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-return-ground:hover {
+  background: #5ee0d0;
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+
+/* SVG Room Shapes & Walls */
+.room-group {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+.room-group rect {
+  stroke: var(--c-walls);
+  stroke-width: 3;
+  stroke-linejoin: miter;
+  transition: fill 0.2s, stroke 0.2s, filter 0.2s, stroke-width 0.2s;
+}
+.room-group.no-popup { cursor: default; }
+.room-group:not(.no-popup):hover rect,
+.room-group.active rect {
+  stroke: #ffffff !important;
+  stroke-width: 4 !important;
+  filter: drop-shadow(0 0 12px var(--accent-glow));
+}
+.room-group text {
+  fill: #0d171c;
+  font-family: var(--font-family);
+  font-weight: 700;
+  text-anchor: middle;
+  pointer-events: none;
+  user-select: none;
+}
+.room-title-lg { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; }
+.room-title-md { font-size: 13px; font-weight: 700; }
+.room-title-sm { font-size: 11px; font-weight: 700; }
+.room-title-xs { font-size: 9.5px; font-weight: 700; }
+
+.outer-wall { stroke: var(--c-walls); stroke-width: 4.5; fill: none; stroke-linecap: square; }
+.inner-wall { stroke: var(--c-walls); stroke-width: 4; stroke-linecap: square; }
+.gate-text { fill: #101c22; font-family: var(--font-family); font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-anchor: middle; }
+
+/* Map Footer */
+.map-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.legend-items {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend-swatch {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.3);
+}
+
+/* Floating Hover Tooltip */
+.hover-tooltip {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  width: 310px;
+  background: rgba(12, 18, 23, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(78, 205, 196, 0.4);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.7), 0 0 20px rgba(78, 205, 196, 0.2);
+  transition: opacity 0.12s ease-out, transform 0.12s ease-out;
+  opacity: 0;
+  transform: scale(0.96) translateY(4px);
+  display: none;
+}
+.hover-tooltip.visible {
+  display: block;
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 6px;
+}
+.tooltip-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+.tooltip-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 3px 7px;
+  border-radius: 4px;
+}
+.tooltip-box {
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.tooltip-highlight {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 4px;
+}
+.tooltip-sub {
+  font-size: 11.5px;
+  color: var(--accent);
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+.tooltip-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Sidebar Section */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.info-card {
+  padding: 22px;
+}
+.info-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  margin: 0 0 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.info-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+  color: var(--text-main);
+}
+.info-desc {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+.info-status-box {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+.info-status-box h4 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.info-status-box p {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* Quick Room Directory Card */
+.directory-card {
+  padding: 18px 20px;
+}
+.directory-card h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.directory-badge {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+.directory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.directory-list::-webkit-scrollbar { width: 4px; }
+.directory-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.directory-item {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.directory-item:hover {
+  border-color: var(--accent);
+  background: #142129;
+}
+.directory-item-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.directory-item-tag {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.03);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+
+/* Timetable sidebar */
+.tt-card { padding: 22px; }
+
+/* ---- Uploaded-timetable card (mapofexcell.html only) ---- */
+.xl-card { padding: 18px 22px; margin-bottom: 16px; }
+.xl-file { font-size: 14px; font-weight: 700; color: var(--text-main); margin: 2px 0 4px; word-break: break-word; }
+.xl-status { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.xl-status.ok { color: var(--success); }
+.xl-status.err { color: #ff8a80; }
+.xl-warn { font-size: 11.5px; color: var(--amber); margin-top: 6px; line-height: 1.5; }
+.xl-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.xl-btn { position: relative; display: inline-flex; align-items: center; min-height: 36px;
+  font: inherit; font-size: 12px; font-weight: 700; padding: 7px 12px; border-radius: 6px; text-decoration: none;
+  border: 1px solid var(--border-focus); background: transparent; color: var(--text-muted); cursor: pointer; }
+.xl-btn:hover { color: var(--text-main); border-color: var(--accent); }
+.xl-btn:focus-within, .xl-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.xl-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.xl-empty { font-size: 13px; color: var(--text-muted); line-height: 1.6; padding: 6px 0; }
+body.no-upload #batchPills, body.no-upload #dayPills, body.no-upload #ttList { display: none; }
+body:not(.no-upload) .xl-empty { display: none; }
+.tt-card .info-desc { margin-bottom: 14px; }
+.pill-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.pill {
+  background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-muted);
+  font: inherit; font-size: 11.5px; font-weight: 700; padding: 6px 11px; border-radius: 99px; cursor: pointer;
+  transition: all 0.15s;
+}
+.pill:hover { color: var(--text-main); border-color: var(--border-focus); }
+.pill.active { background: var(--accent); border-color: var(--accent); color: #06090c; }
+.tt-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.tt-box {
+  background: var(--bg-elevated); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md); padding: 11px 13px; cursor: pointer; text-align: left;
+  font: inherit; color: inherit; width: 100%; transition: all 0.15s;
+}
+.tt-box:hover, .tt-box.active { border-color: var(--accent); background: #142129; }
+.tt-box.no-map { cursor: default; border-left-color: var(--amber); }
+.tt-time { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.02em; }
+.tt-subject { font-size: 13px; font-weight: 700; color: var(--text-main); margin: 3px 0 2px; line-height: 1.35; }
+.tt-who { font-size: 11.5px; color: var(--text-muted); }
+.tt-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+.tt-chip { font-size: 10px; font-weight: 700; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 7px; border-radius: 4px; }
+.tt-note { font-size: 10.5px; color: var(--amber); margin-top: 6px; line-height: 1.45; }
+.tt-recess {
+  text-align: center; font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: var(--text-dim);
+  border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 6px;
+}
+.tt-empty { font-size: 12px; color: var(--text-dim); padding: 10px 0; }
+
+/* Rooms used by the selected batch on the selected day */
+.room-group.has-lecture rect { stroke: #0f9d92; stroke-width: 4.5; }
+
+/* Tooltip lecture rows */
+.tt-row { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px; margin-top: 6px; }
+.tt-row-time { font-size: 11px; font-weight: 700; color: var(--accent); }
+.tt-row-subject { font-size: 12.5px; font-weight: 700; color: #fff; margin: 2px 0 1px; line-height: 1.35; }
+.tt-row-who { font-size: 11px; color: var(--text-muted); }
+.tooltip-day { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; }
+.tooltip-foot { font-size: 10.5px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+
+/* Footer Link */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--accent); }
+
+
+@media (max-width: 1080px) {
+  .layout { grid-template-columns: 1fr; }
+  .page { padding: 16px 14px; }
+  .hero-title h1 { font-size: 24px; }
+  .quick-search { width: 100%; }
+  .floor-switcher { display: none; }
+  .floor-select-dropdown { display: block; }
+}
+
+/* =========================================================
+   PHONE LAYOUT — applies only below 850px wide.
+   Nothing in this block runs on desktop.
+   ========================================================= */
+.tooltip-close, .swipe-hint { display: none; }
+
+@media (max-width: 850px) {
+  /* Order on phones: nav → timetable → heading/search → filters → map */
+  .page { display: flex; flex-direction: column; padding: 12px 12px 110px; }
+  .layout { display: contents; }
+  .top-nav { order: 0; margin-bottom: 12px; padding-bottom: 12px; }
+  .side-panel { order: 1; margin-bottom: 16px; }
+  .hero-bar { order: 2; margin-bottom: 12px; gap: 10px; }
+  .filter-bar { order: 3; margin-bottom: 12px; }
+  .layout > section.card { order: 4; }
+  .back-link { order: 5; }
+
+  /* Trim the top */
+  .brand-link { font-size: 17px; }
+  .hero-title h1 { font-size: 20px; }
+  .hero-title p { display: none; }
+  .tt-card { padding: 16px; }
+  .info-title { font-size: 19px; }
+  .tt-card .info-desc { margin-bottom: 10px; }
+
+  /* Comfortable tap targets */
+  .floor-select-dropdown { min-height: 44px; font-size: 14px; padding: 8px 14px; }
+  .quick-search input { min-height: 46px; font-size: 16px; }
+  .filter-chip { min-height: 42px; padding: 8px 16px; font-size: 13px; }
+  .pill-row { gap: 8px; }
+  .pill { min-height: 42px; min-width: 46px; padding: 8px 14px; font-size: 13px; }
+  .tool-btn { width: 40px; height: 40px; font-size: 18px; }
+  .tt-box { padding: 13px 14px; }
+  .tt-time { font-size: 12px; }
+  .tt-subject { font-size: 14px; }
+  .tt-who { font-size: 12.5px; }
+
+  /* Bigger map that you swipe sideways */
+  .map-header { padding: 10px 14px; }
+  .map-viewport {
+    display: block; min-height: 0; padding: 10px;
+    overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+  }
+  #campusSvg { width: 760px; max-width: none; transition: none; }
+  .map-footer { padding: 10px 14px; }
+  #mapStatusHint { display: none; }
+  .swipe-hint { display: block; color: var(--accent); font-weight: 600; }
+
+  /* Lecture popup becomes a sheet at the bottom of the screen */
+  .hover-tooltip {
+    left: 10px !important; right: 10px; top: auto !important; bottom: 10px;
+    width: auto; max-height: 60vh; overflow-y: auto;
+    pointer-events: auto; padding: 16px;
+    transform: translateY(16px);
+  }
+  .hover-tooltip.visible { transform: translateY(0); }
+  .tooltip-title { font-size: 16px; }
+  .tooltip-badge { margin-left: auto; margin-right: 8px; }
+  .tooltip-close {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; flex: none;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    border-radius: 50%; color: var(--text-main); font-size: 18px; line-height: 1; cursor: pointer;
+  }
+  .tt-row-time { font-size: 12px; }
+  .tt-row-subject { font-size: 14px; }
+  .tt-row-who { font-size: 12.5px; }
+  .tooltip-foot { font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <a href="index.html" class="brand-link">
+      <span>CampusOS</span>
+      <span class="brand-badge" id="classBadge">COMPUTER ENGINEERING · DIV A</span>
+    </a>
+
+    <div class="top-controls">
+      <!-- 4 Floors Switcher -->
+      <div class="floor-switcher" role="tablist" aria-label="Floor Selector">
+        <button class="floor-tab-btn active" data-floor="0">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          Ground Floor
+        </button>
+        <button class="floor-tab-btn" data-floor="1">Floor 1</button>
+        <button class="floor-tab-btn" data-floor="2">Floor 2</button>
+        <button class="floor-tab-btn" data-floor="3">Floor 3</button>
+        <button class="floor-tab-btn" data-floor="4">Floor 4</button>
+      </div>
+
+      <!-- Mobile dropdown for floors -->
+      <select class="floor-select-dropdown" id="floorSelectDropdown">
+        <option value="0" selected>Ground Floor</option>
+        <option value="1">Floor 1</option>
+        <option value="2">Floor 2</option>
+        <option value="3">Floor 3</option>
+        <option value="4">Floor 4</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- Title & Search Area -->
+  <div class="hero-bar">
+    <div class="hero-title">
+      <h1>
+        <span id="currentFloorHeading">Ground Floor Navigation</span>
+        <span class="floor-tag" id="currentFloorTag">LEVEL 0</span>
+      </h1>
+      <p id="contextSubtitle">Engineering Block · Ground Level Architectural Plan</p>
+    </div>
+    <div class="quick-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search spaces (e.g. Chemistry, Staff, Lab, Workshop...)" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- Category Filter Chips -->
+  <div class="filter-bar">
+    <button class="filter-chip active" data-filter="all">All Spaces</button>
+    <button class="filter-chip" data-filter="lab"><span class="dot" style="background:#8cbcf5"></span>Labs</button>
+    <button class="filter-chip" data-filter="classroom"><span class="dot" style="background:#f8c593"></span>Classrooms / Halls</button>
+    <button class="filter-chip" data-filter="office"><span class="dot" style="background:#fedbb4"></span>Offices</button>
+    <button class="filter-chip" data-filter="utility"><span class="dot" style="background:#a7d7b5"></span>Utilities</button>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="layout">
+    <!-- Floor Map Card -->
+    <section class="card">
+      <div class="map-header">
+        <div class="map-title">
+          <span id="mapTitleText">GROUND FLOOR BLUEPRINT</span>
+          <span class="interactive-badge">INTERACTIVE</span>
+        </div>
+        <div class="map-tools">
+          <button class="tool-btn" id="zoomInBtn" title="Zoom In">+</button>
+          <button class="tool-btn" id="zoomOutBtn" title="Zoom Out">−</button>
+          <button class="tool-btn" id="resetZoomBtn" title="Reset View">⊙</button>
+        </div>
+      </div>
+
+      <div class="map-viewport">
+        <!-- DYNAMIC SVG MAP (Populated from ROOM_GEOMETRY and ROOM_DATA in data.js) -->
+        <svg id="campusSvg" viewBox="0 0 1024 400" aria-label="Campus Blueprint Map">
+          <!-- Rooms Group Container -->
+          <g id="roomsContainer"></g>
+        </svg>
+
+        <!-- Floor Placeholder (Used when floor geometry is not yet populated) -->
+        <div class="floor-placeholder" id="floorPlaceholder">
+          <div class="placeholder-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </div>
+          <h3 id="placeholderTitle">Floor Blueprint Template</h3>
+          <p id="placeholderDesc">Floor map template is ready. Add geometry to ROOM_GEOMETRY in data.js to activate this floor map.</p>
+          <button class="btn-return-ground" id="returnGroundBtn">Return to Ground Floor</button>
+        </div>
+      </div>
+
+      <!-- Map Footer & Legend -->
+      <div class="map-footer">
+        <div class="legend-items">
+          <div class="legend-item"><span class="legend-swatch" style="background:var(--c-lab)"></span>Labs</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:var(--c-auditorium)"></span>Classrooms / Halls</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:var(--c-office)"></span>Offices</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:var(--c-washroom)"></span>Utilities</div>
+        </div>
+        <div class="swipe-hint">Swipe the map sideways · tap a highlighted room</div>
+        <div id="mapStatusHint">Hover any box to see when the lecture is and who is teaching</div>
+      </div>
+    </section>
+
+    <!-- Sidebar Section -->
+    <aside class="side-panel">
+      <div class="card xl-card">
+        <p class="info-eyebrow">TIMETABLE FILE</p>
+        <div class="xl-file" id="xlFileName">No file uploaded</div>
+        <div class="xl-status" id="xlStatus">Upload your class timetable (.xlsx) to see it on the map.</div>
+        <div id="xlWarn"></div>
+        <div class="xl-actions">
+          <label class="xl-btn"><input type="file" id="xlFile" accept=".xlsx,.xls,.csv"><span id="xlPickLabel">Upload Excel file</span></label>
+        </div>
+      </div>
+      <div class="card tt-card">
+        <p class="info-eyebrow">MY TIMETABLE</p>
+        <h2 class="info-title" id="ttHeading">Batch A1</h2>
+        <p class="info-desc" id="ttClass">Computer Engineering · Division A</p>
+        <div class="pill-row" id="batchPills"></div>
+        <div class="pill-row" id="dayPills"></div>
+        <div class="tt-list" id="ttList"></div>
+        <div class="xl-empty">No timetable yet. Upload your class's Excel timetable above, or from the home page, and your lectures will show up here and on the map.</div>
+      </div>
+    </aside>
+  </div>
+
+  <a class="back-link" href="index.html">← Return to home</a>
+</div>
+
+<!-- FLOATING HOVER TOOLTIP -->
+<div id="hoverTooltip" class="hover-tooltip" role="tooltip">
+  <div class="tooltip-header">
+    <h4 class="tooltip-title" id="ttTitle">Room</h4>
+    <span class="tooltip-badge" id="ttBadge">Room</span>
+    <button class="tooltip-close" id="ttClose" aria-label="Close">×</button>
+  </div>
+  <div id="ttBody"></div>
+</div>
+
+<!-- External Data & Geometry Layer -->
+<script src="data.js"></script>
+
+<!-- This page never shows data.js's typed-in timetable: it only uses the uploaded Excel file. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="excel-timetable.js"></script>
+<script>
+const XL_KEY = 'campusos.excelUpload';           // written by index.html and by this page
+
+function applyTimetable(t) {
+  DAYS.splice(0, DAYS.length, ...t.DAYS);
+  BATCHES.splice(0, BATCHES.length, ...t.BATCHES);
+  SLOTS.splice(0, SLOTS.length, ...t.SLOTS);
+  Object.keys(RECESS_AFTER).forEach(k => delete RECESS_AFTER[k]);
+  Object.assign(RECESS_AFTER, t.RECESS_AFTER);
+  Object.keys(TIMETABLE).forEach(k => delete TIMETABLE[k]);
+  Object.assign(TIMETABLE, t.TIMETABLE);
+  LECTURE_ROOMS.clear();
+  t.LECTURE_ROOMS.forEach(r => LECTURE_ROOMS.add(r));
+}
+
+// Start with an EMPTY timetable (no lectures anywhere), then fill it from the upload.
+applyTimetable({
+  DAYS: DAYS.slice(), BATCHES: ['-'], SLOTS: [], RECESS_AFTER: {},
+  TIMETABLE: { '-': Object.fromEntries(DAYS.map(d => [d, []])) }, LECTURE_ROOMS: new Set(),
+});
+
+let xlUpload = null, xlParsed = null, xlError = '';
+try { xlUpload = JSON.parse(localStorage.getItem(XL_KEY) || 'null'); } catch (e) { xlUpload = null; }
+if (xlUpload && xlUpload.rows) {
+  try { xlParsed = ExcelTimetable.parseRows(xlUpload.rows, ROOM_DATA); applyTimetable(xlParsed); }
+  catch (e) { xlError = e.message; xlParsed = null; }
+}
+if (!xlParsed) document.body.classList.add('no-upload');
+</script>
+
+<script>
+// =========================================================
+// CAMPUS MAP ENGINE — SVG RENDERER, TIMETABLE & INTERACTION
+// =========================================================
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const params = new URLSearchParams(window.location.search);
+
+let currentFloor = 0;
+let currentFilter = 'all';
+let zoomLevel = 1;
+let currentBatch = BATCHES.includes(params.get('batch')) ? params.get('batch') : BATCHES[0];
+const todayIdx = new Date().getDay() - 1;            // Monday = 0 … Saturday = 5, Sunday = -1
+const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+let currentDay = DAYS.includes(todayName) ? todayName : DAYS[0];
+
+const $ = id => document.getElementById(id);
+const campusSvg = $('campusSvg');
+const roomsContainer = $('roomsContainer');
+const floorPlaceholder = $('floorPlaceholder');
+const hoverTooltip = $('hoverTooltip');
+const searchInput = $('searchInput');
+
+const FLOOR_NAMES = ['Ground Floor', 'First Floor', 'Second Floor', 'Third Floor', 'Fourth Floor'];
+const floorLabel = f => ({
+  title: f === 0 ? 'Ground Floor Navigation' : `Floor ${f} Navigation`,
+  tag: `LEVEL ${f}`,
+  map: f === 0 ? 'GROUND FLOOR BLUEPRINT' : `FLOOR ${f} BLUEPRINT`,
+  sub: `Engineering Block · ${FLOOR_NAMES[f] || 'Floor ' + f} Plan`,
+});
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/** Lectures of the selected batch held in a given room, grouped by day. */
+function lecturesInRoom(roomId, day) {
+  return TIMETABLE[currentBatch][day].filter(l => l.room === roomId);
+}
+
+/** Wrap and shrink a label so it stays inside its room. */
+function fitRoomLabel(text, label, geom) {
+  const PAD = 7, CHAR_W = 0.64, LINE_H = 1.18;
+  const availW = geom.width - PAD * 2;
+  const availH = geom.height - PAD * 2;
+  const words = String(label).trim().split(/\s+/);
+  const widthOf = (s, fs) => s.length * fs * CHAR_W;
+
+  let maxFs = 11;
+  if (geom.width >= 130 && geom.height >= 120) maxFs = 15;
+  else if (geom.width >= 85 && geom.height >= 55) maxFs = 13;
+
+  let best = null;
+  for (let fs = maxFs; fs >= 6 && !best; fs -= 0.5) {
+    const lines = [];
+    let line = '';
+    words.forEach(w => {
+      const trial = line ? line + ' ' + w : w;
+      if (line && widthOf(trial, fs) > availW) { lines.push(line); line = w; }
+      else line = trial;
+    });
+    if (line) lines.push(line);
+    if (lines.every(l => widthOf(l, fs) <= availW) && lines.length * fs * LINE_H <= availH) best = { fs, lines };
+  }
+  if (!best) best = { fs: 6, lines: [words.join(' ')] };
+
+  const cx = geom.x + geom.width / 2;
+  const cy = geom.y + geom.height / 2;
+  const lh = best.fs * LINE_H;
+  text.setAttribute('x', cx);
+  text.setAttribute('font-size', best.fs);
+  text.setAttribute('font-weight', best.fs >= 15 ? 800 : 700);
+  text.setAttribute('dominant-baseline', 'central');
+  best.lines.forEach((l, idx) => {
+    const t = document.createElementNS(SVG_NS, 'tspan');
+    t.setAttribute('x', cx);
+    t.setAttribute('y', cy + (idx - (best.lines.length - 1) / 2) * lh);
+    t.textContent = l;
+    text.appendChild(t);
+  });
+}
+
+/** Draw every room of a floor. */
+function renderFloor(floorNum) {
+  currentFloor = parseInt(floorNum, 10) || 0;
+  const meta = floorLabel(currentFloor);
+  const floorGeom = ROOM_GEOMETRY[currentFloor];
+
+  $('currentFloorHeading').textContent = meta.title;
+  $('currentFloorTag').textContent = meta.tag;
+  $('mapTitleText').textContent = meta.map;
+  $('contextSubtitle').textContent = meta.sub;
+
+  const rooms = floorGeom ? floorGeom.rooms : null;
+  const roomIds = rooms ? Object.keys(rooms) : [];
+
+  if (roomIds.length === 0) {
+    campusSvg.style.display = 'none';
+    floorPlaceholder.style.display = 'flex';
+    $('placeholderTitle').textContent = `${meta.title} Template`;
+    $('placeholderDesc').textContent = `No room geometry defined for Floor ${currentFloor} yet. Add rooms to ROOM_GEOMETRY[${currentFloor}] in data.js.`;
+    return;
+  }
+
+  campusSvg.style.display = 'block';
+  floorPlaceholder.style.display = 'none';
+  if (floorGeom.viewBox) campusSvg.setAttribute('viewBox', floorGeom.viewBox);
+  roomsContainer.innerHTML = '';
+
+  if (floorGeom.boundary) {
+    const p = document.createElementNS(SVG_NS, 'path');
+    p.setAttribute('d', floorGeom.boundary);
+    p.setAttribute('fill', 'var(--c-corridor)');
+    p.setAttribute('stroke', 'var(--c-walls)');
+    p.setAttribute('stroke-width', '4.5');
+    p.setAttribute('stroke-linejoin', 'round');
+    roomsContainer.appendChild(p);
+  }
+
+  roomIds.forEach(roomId => {
+    const geom = rooms[roomId];
+    const data = ROOM_DATA[roomId] || { name: roomId, type: 'other', color: 'var(--c-office)' };
+
+    const g = document.createElementNS(SVG_NS, 'g');
+    g.setAttribute('id', roomId);
+    g.setAttribute('class', 'room-group' + (LECTURE_ROOMS.has(roomId) ? '' : ' no-popup'));
+    g.setAttribute('data-room-id', roomId);
+    g.setAttribute('data-category', data.type || 'other');
+
+    const rect = document.createElementNS(SVG_NS, 'rect');
+    rect.setAttribute('x', geom.x);
+    rect.setAttribute('y', geom.y);
+    rect.setAttribute('width', geom.width);
+    rect.setAttribute('height', geom.height);
+    rect.setAttribute('fill', data.color || 'var(--c-office)');
+    g.appendChild(rect);
+
+    if (data.name) {
+      const text = document.createElementNS(SVG_NS, 'text');
+      fitRoomLabel(text, data.name, geom);
+      g.appendChild(text);
+    }
+
+    g.addEventListener('mouseenter', e => onRoomHover(roomId, e));
+    g.addEventListener('mousemove', positionTooltip);
+    g.addEventListener('mouseleave', onRoomLeave);
+    g.addEventListener('click', e => onRoomHover(roomId, e));
+    roomsContainer.appendChild(g);
+  });
+
+  applyCategoryFilter(currentFilter);
+  markLectureRooms();
+}
+
+/** Outline the boxes the selected batch uses on the selected day. */
+function markLectureRooms() {
+  const used = new Set(TIMETABLE[currentBatch][currentDay].map(l => l.room));
+  document.querySelectorAll('.room-group').forEach(rg => {
+    rg.classList.toggle('has-lecture', used.has(rg.getAttribute('data-room-id')));
+  });
+}
+
+/** Hovering a box: when is the lecture and who is teaching. */
+function onRoomHover(roomId, e) {
+  if (!LECTURE_ROOMS.has(roomId)) { onRoomLeave(); return; }   // popup only where lectures are held
+  const data = ROOM_DATA[roomId] || { name: roomId, type: 'room' };
+  $('ttTitle').textContent = data.name || 'Unlabelled room';
+  $('ttBadge').textContent = (data.type || 'room').toUpperCase();
+
+  const today = lecturesInRoom(roomId, currentDay);
+  const otherDays = DAYS.filter(d => d !== currentDay && lecturesInRoom(roomId, d).length);
+  let html = '';
+
+  if (today.length) {
+    html += `<div class="tooltip-day">${currentDay} · Batch ${currentBatch}</div>`;
+    html += today.map(l => `
+      <div class="tt-row">
+        <div class="tt-row-time">${esc(l.time)}</div>
+        <div class="tt-row-subject">${esc(l.subject)}</div>
+        <div class="tt-row-who">${esc(l.who)}</div>
+      </div>`).join('');
+    const note = today.find(l => l.note);
+    if (note) html += `<div class="tooltip-foot">${esc(note.note)}</div>`;
+  } else if (otherDays.length) {
+    html += `<div class="tooltip-foot">No lecture here for Batch ${currentBatch} on ${currentDay}.</div>`;
+  } else {
+    html += `<div class="tooltip-foot">${esc(data.details || '')}${data.details ? '<br>' : ''}No lecture here for Batch ${currentBatch}.</div>`;
+  }
+  if (otherDays.length) {
+    html += `<div class="tooltip-foot">Also used on: ${otherDays.map(d => d.slice(0, 3)).join(', ')}</div>`;
+  }
+  $('ttBody').innerHTML = html;
+
+  hoverTooltip.classList.add('visible');
+  positionTooltip(e);
+  document.querySelectorAll('.room-group').forEach(rg => {
+    rg.classList.toggle('active', rg.getAttribute('data-room-id') === roomId);
+  });
+}
+
+function onRoomLeave() {
+  hoverTooltip.classList.remove('visible');
+  document.querySelectorAll('.room-group').forEach(rg => rg.classList.remove('active'));
+}
+
+function positionTooltip(e) {
+  if (!e || e.clientX == null) return;
+  const w = hoverTooltip.offsetWidth || 310;
+  const h = hoverTooltip.offsetHeight || 140;
+  let x = e.clientX + 16;
+  let y = e.clientY + 16;
+  if (x + w > window.innerWidth - 12) x = e.clientX - w - 16;
+  if (y + h > window.innerHeight - 12) y = window.innerHeight - h - 12;
+  hoverTooltip.style.left = `${Math.max(12, x)}px`;
+  hoverTooltip.style.top = `${Math.max(12, y)}px`;
+}
+
+/** Sidebar: batch pills, day pills and the timetable boxes. */
+function renderTimetable() {
+  $('ttHeading').textContent = `Batch ${currentBatch} · ${currentDay}`;
+
+  $('batchPills').innerHTML = BATCHES.map(b =>
+    `<button class="pill${b === currentBatch ? ' active' : ''}" data-batch="${b}">${b}</button>`).join('');
+  $('dayPills').innerHTML = DAYS.map(d =>
+    `<button class="pill${d === currentDay ? ' active' : ''}" data-day="${d}">${d.slice(0, 3)}</button>`).join('');
+
+  const lectures = TIMETABLE[currentBatch][currentDay];
+  const list = $('ttList');
+  list.innerHTML = '';
+  if (!lectures.length) list.innerHTML = '<div class="tt-empty">No lectures on this day.</div>';
+
+  lectures.forEach((l, i) => {
+    const room = l.room ? ROOM_DATA[l.room] : null;
+    const where = room ? `${room.name} · ${FLOOR_NAMES[room.floor]}` : l.roomLabel;
+    const box = document.createElement('button');
+    box.className = 'tt-box' + (room ? '' : ' no-map');
+    box.innerHTML = `
+      <div class="tt-time">${esc(l.time)}</div>
+      <div class="tt-subject">${esc(l.subject)}</div>
+      <div class="tt-who">${esc(l.who)}</div>
+      <div class="tt-meta">
+        <span class="tt-chip">${esc(where)}</span>
+        <span class="tt-chip">${l.shared ? BATCHES.join(' / ') : 'Batch ' + currentBatch}</span>
+      </div>
+      ${l.note ? `<div class="tt-note">${esc(l.note)}</div>` : ''}`;
+    if (room) box.addEventListener('click', () => focusRoom(l.room, box));
+    list.appendChild(box);
+
+    // Recess only if the day continues after it
+    const next = lectures[i + 1];
+    if (RECESS_AFTER[l.slot] && next) {
+      const r = document.createElement('div');
+      r.className = 'tt-recess';
+      r.textContent = `RECESS · ${RECESS_AFTER[l.slot]}`;
+      list.appendChild(r);
+    } else if (next && next.slot > l.slot + 1) {
+      for (const s of Object.keys(RECESS_AFTER)) {
+        if (s >= l.slot && s < next.slot) {
+          const r = document.createElement('div');
+          r.className = 'tt-recess';
+          r.textContent = `RECESS · ${RECESS_AFTER[s]}`;
+          list.appendChild(r);
+        }
+      }
+    }
+  });
+
+  document.querySelectorAll('#batchPills .pill').forEach(p => p.addEventListener('click', () => {
+    currentBatch = p.dataset.batch; renderTimetable(); markLectureRooms();
+  }));
+  document.querySelectorAll('#dayPills .pill').forEach(p => p.addEventListener('click', () => {
+    currentDay = p.dataset.day; renderTimetable(); markLectureRooms();
+  }));
+}
+
+/** Click a timetable box: jump to its floor and light up the room. */
+function focusRoom(roomId, box) {
+  const room = ROOM_DATA[roomId];
+  if (!room) return;
+  if (room.floor !== currentFloor) switchFloor(room.floor);
+  document.querySelectorAll('.tt-box').forEach(b => b.classList.toggle('active', b === box));
+  document.querySelectorAll('.room-group').forEach(rg => {
+    rg.classList.toggle('active', rg.getAttribute('data-room-id') === roomId);
+  });
+  if (isPhone()) centreRoomOnPhone(roomId);
+  else campusSvg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/** Category filter chips. */
+function applyCategoryFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.filter === filter);
+  });
+  document.querySelectorAll('.room-group').forEach(rg => {
+    const cat = rg.getAttribute('data-category');
+    rg.style.opacity = (filter === 'all' || cat === filter) ? '1' : '0.18';
+  });
+}
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => applyCategoryFilter(chip.dataset.filter));
+});
+
+/** Search: jumps to the floor of the first match and dims the rest. */
+searchInput.addEventListener('input', e => {
+  const query = e.target.value.toLowerCase().trim();
+  if (!query) { applyCategoryFilter(currentFilter); return; }
+  const matches = id => id.toLowerCase().includes(query) || ((ROOM_DATA[id] || {}).name || '').toLowerCase().includes(query);
+  const onThisFloor = Object.keys(ROOM_GEOMETRY[currentFloor].rooms).some(matches);
+  if (!onThisFloor) {
+    const hit = Object.keys(ROOM_DATA).find(matches);
+    if (hit) switchFloor(ROOM_DATA[hit].floor);
+  }
+  document.querySelectorAll('.room-group').forEach(rg => {
+    rg.style.opacity = matches(rg.getAttribute('data-room-id') || '') ? '1' : '0.12';
+  });
+});
+
+/** Floor switcher. */
+function switchFloor(floorNum) {
+  const f = parseInt(floorNum, 10) || 0;
+  document.querySelectorAll('.floor-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.floor, 10) === f);
+  });
+  $('floorSelectDropdown').value = f;
+  renderFloor(f);
+}
+document.querySelectorAll('.floor-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchFloor(btn.dataset.floor));
+});
+$('floorSelectDropdown').addEventListener('change', e => switchFloor(e.target.value));
+$('returnGroundBtn').addEventListener('click', () => switchFloor(0));
+
+/** Zoom controls. */
+const setZoom = z => { zoomLevel = z; campusSvg.style.transform = `scale(${z})`; };
+$('zoomInBtn').addEventListener('click', () => setZoom(Math.min(zoomLevel + 0.25, 2.5)));
+$('zoomOutBtn').addEventListener('click', () => setZoom(Math.max(zoomLevel - 0.25, 0.75)));
+$('resetZoomBtn').addEventListener('click', () => setZoom(1));
+
+
+// =========================================================
+// PHONE-ONLY BEHAVIOUR — every block checks isPhone() first,
+// so none of this runs on desktop.
+// =========================================================
+const isPhone = () => window.matchMedia('(max-width: 850px)').matches;
+const PHONE_MAP_WIDTH = 760;
+const mapViewport = document.querySelector('.map-viewport');
+
+// Close the bottom sheet: ✕ button, or tap anywhere outside a lecture box.
+$('ttClose').addEventListener('click', onRoomLeave);
+document.addEventListener('click', e => {
+  if (!isPhone()) return;
+  if (e.target.closest('.room-group:not(.no-popup)') || e.target.closest('#hoverTooltip')) return;
+  if (e.target.closest('.tt-box')) { hoverTooltip.classList.remove('visible'); return; }
+  onRoomLeave();
+});
+
+// On phones the +/− buttons resize the map (so it stays swipeable) instead of scaling it.
+function applyPhoneZoom() {
+  if (isPhone()) {
+    campusSvg.style.transform = 'none';
+    campusSvg.style.width = `${Math.round(PHONE_MAP_WIDTH * zoomLevel)}px`;
+  } else {
+    campusSvg.style.width = '';
+    campusSvg.style.transform = `scale(${zoomLevel})`;
+  }
+}
+['zoomInBtn', 'zoomOutBtn', 'resetZoomBtn'].forEach(id => $(id).addEventListener('click', applyPhoneZoom));
+window.addEventListener('resize', applyPhoneZoom);
+if (isPhone()) applyPhoneZoom();
+
+// Tapping a timetable box on a phone: bring the map into view and centre the room.
+function centreRoomOnPhone(roomId) {
+  if (!isPhone()) return;
+  const rect = document.querySelector(`#${CSS.escape(roomId)} rect`);
+  if (!rect) return;
+  const r = rect.getBoundingClientRect();
+  const v = mapViewport.getBoundingClientRect();
+  mapViewport.scrollLeft += (r.left + r.width / 2) - (v.left + v.width / 2);
+  mapViewport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Initial render
+$('ttClass').textContent = `${params.get('branch') || 'Computer Engineering'} · Division ${params.get('division') || 'A'}`;
+renderTimetable();
+switchFloor(params.get('floor') || 0);
+</script>
+
+<script>
+// =========================================================
+// UPLOADED TIMETABLE — status card + "upload a different file"
+// =========================================================
+(() => {
+  const status = $('xlStatus'), warnBox = $('xlWarn');
+
+  function showState(t, fileName) {
+    if (!t) {
+      $('ttHeading').textContent = 'My timetable';
+      $('ttClass').textContent = 'Nothing uploaded yet';
+      if (xlError) { status.className = 'xl-status err'; status.textContent = `Couldn't read the saved file: ${xlError}`; }
+      return;
+    }
+    $('xlFileName').textContent = fileName || 'Your timetable';
+    $('xlPickLabel').textContent = 'Upload a different file';
+    status.className = 'xl-status ok';
+    status.textContent = `${t.SLOTS.length} time slots · ${t.DAYS.length} days · batches ${t.BATCHES.join(', ')}`;
+    warnBox.innerHTML = (t.warnings || []).map(w => `<div class="xl-warn">${esc(w)}</div>`).join('');
+    if (t.classLabel) { $('ttClass').textContent = t.classLabel; $('classBadge').textContent = t.classLabel.replace('Division', 'Div').toUpperCase(); }
+  }
+
+  $('xlFile').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    status.className = 'xl-status';
+    status.textContent = `Reading ${file.name}…`;
+    warnBox.innerHTML = '';
+    try {
+      if (typeof XLSX === 'undefined') throw new Error('the Excel reader did not load. Check your internet connection and reload.');
+      const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+      let t = null, rows = null, lastErr = null;
+      for (const name of wb.SheetNames) {
+        const r = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: '', raw: false });
+        try { t = ExcelTimetable.parseRows(r, ROOM_DATA); rows = r; break; } catch (err) { lastErr = err; }
+      }
+      if (!t) throw lastErr || new Error('the file has no sheets.');
+      if (!t.sessionCount) throw new Error('found the days and times, but no lectures under them.');
+      try { localStorage.setItem(XL_KEY, JSON.stringify({ rows, fileName: file.name })); } catch (err) { /* works for this visit only */ }
+      applyTimetable(t);
+      document.body.classList.remove('no-upload');
+      if (!BATCHES.includes(currentBatch)) currentBatch = BATCHES[0];
+      if (!DAYS.includes(currentDay)) currentDay = DAYS[0];
+      showState(t, file.name);
+      renderTimetable();
+      switchFloor(currentFloor);
+    } catch (err) {
+      status.className = 'xl-status err';
+      status.textContent = `Couldn't read ${file.name}: ${err.message}`;
+    }
+  });
+
+  showState(xlParsed, xlUpload && xlUpload.fileName);
+})();
+</script>
+</body>
+</html>
